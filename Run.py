@@ -36,8 +36,17 @@ option = 3
 alpha = 1
 beta = 0.0001
 
-#shutil.rmtree('data/option{}/frames'.format(option))
-#shutil.rmtree('data/option{}/plots'.format(option))
+if not os.path.exists("data"):
+    os.mkdir("data")
+
+if not os.path.exists("data/option{}".format(option)):
+    os.mkdir("data/option{}".format(option))
+
+if os.path.exists("data/option{}/frames".format(option)):
+    shutil.rmtree('data/option{}/frames'.format(option))
+
+if os.path.exists("data/option{}/plots".format(option)):
+    shutil.rmtree('data/option{}/plots'.format(option))
 
 os.mkdir('data/option{}/frames'.format(option))
 os.mkdir('data/option{}/plots'.format(option))
