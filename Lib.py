@@ -2,6 +2,7 @@ from scipy.spatial import distance as dist
 from collections import OrderedDict
 
 # Importing utility libraries
+
 import numpy as np
 import tensorflow as tf
 import cv2
@@ -10,11 +11,12 @@ import time
 import random
 
 class Voronoi:
-    def get_distance(self, point1, point2):
+
+    def get_distance(self, point1, point2): # Calculate distance between two points
          distance = math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
          return distance
 
-    def voronoi(self, agentPosition, numAgents, xdim, ydim):
+    def voronoi(self, agentPosition, numAgents, xdim, ydim): # Calculate the Voronoi diagram given agent positions, number of Voronoi generators and xy coordinates of a discretized space
         distanceArray = []
         distanceCollection  = []
         indexCollection = []
@@ -27,7 +29,7 @@ class Voronoi:
             voronoiCollection.insert(n,[])
             for i in range(len(ydim)):
                 for j in range(len(xdim)):
-                    dist = self.get_distance(agentPosition[n], [xdim[j], ydim[i]])
+                    dist = self.get_distance(agentPosition[n], [xdim[j], ydim[i]]) # Check distance between agent "n" and coordinate [j, i]
                     distanceArray[n].append(dist)
             distanceCollection.insert(n, np.array(distanceArray[n]).reshape( np.size(ydim),np.size(xdim) ))
 
@@ -36,7 +38,7 @@ class Voronoi:
                 for jj in range(len(xdim)):
 
                     for m in range(numAgents):
-                        if distanceCollection[n][ii,jj] <= distanceCollection[m][ii,jj]:
+                        if distanceCollection[n][ii,jj] <= distanceCollection[m][ii,jj]: # Check that the point [ii, jj] is closer to agent "n" than all other agents
                             counter = counter + 1
 
                         if counter == numAgents:
@@ -50,6 +52,8 @@ class Voronoi:
     def risk_density(self, x_dim, y_dim, target, alpha, beta):
       phi = np.zeros((len(y_dim), len(x_dim)))
 
+      # Assign risk density to each coordinate on the mesh grid given a distribution function
+
       for i in range(len(y_dim)):
           for j in range(len(x_dim)):
               dis = self.get_distance([x_dim[j], y_dim[i]], target)
@@ -58,7 +62,7 @@ class Voronoi:
 
       return phi
 
-    def centroid(self, vor, index, risk_den):
+    def centroid(self, vor, index, risk_den): # Function for finding the centroid of a Voronoi cell given the risk distribution in that cell
         risk = 0
         risk_x = 0
         risk_y = 0
@@ -73,11 +77,11 @@ class Voronoi:
 
         return [C_x, C_y]
 
-    def sensing(self, dis):
+    def sensing(self, dis): # Sensing capabilities of an agent with respect to calculation of the coverage metric
         sense = np.exp(-(dis**2)/(30**2))
         return sense
 
-    def coverage_metric(self, agent_pos, vor, index, risk_den):
+    def coverage_metric(self, agent_pos, vor, index, risk_den): # Calculating the coverage metric over a single Voronoi cell
         coverage = 0
 
         for i in range(len(vor)):
@@ -86,7 +90,8 @@ class Voronoi:
 
         return coverage
 
-class Tracker():
+class Tracker(): # Credit for this code goes to Adrian Rosebrock at https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
+
 	def __init__(self, maxDisappeared=50):
 		# initialize the next unique object ID along with two ordered
 		# dictionaries used to keep track of mapping a given object
@@ -149,7 +154,7 @@ class Tracker():
 			for i in range(0, len(inputCentroids)):
 				self.register(inputCentroids[i])
 
-		# otherwise, are are currently tracking objects so we need to
+		# otherwise, we are currently tracking objects so we need to
 		# try to match the input centroids to existing object
 		# centroids
 		else:
@@ -237,11 +242,11 @@ class Tracker():
 
 class Function():
 
-        def angle_to_message(self, angle):
+        def angle_to_message(self, angle): # Convert angle to string in order to send to Alphabot2 robot
             message = str(angle)
             return message
 
-        def get_angle(self, angle1, angle2):
+        def get_angle(self, angle1, angle2): # Get angle difference between the orientation of a robot and the desired orientation of a robot
             angle = angle2 - angle1
             if angle > 360:
                 angle = angle - 360
@@ -249,17 +254,17 @@ class Function():
                 angle = angle + 360
             return angle
 
-        def get_distance(self, point1, point2):
+        def get_distance(self, point1, point2): # Get distance between two points
              distance = math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
              return distance
 
-        def get_orientation(self, point1, point2):
+        def get_orientation(self, point1, point2): # Get orientation of a robot given its previous position and its current position
              orientation = math.degrees(math.atan2(point1[1] - point2[1], point2[0] - point1[0]))
              if orientation < 0:
                  orientation = 360 + orientation
              return orientation
 
-        def test_1(self, idArray, numRobots):
+        def test_1(self, idArray, numRobots): # Test 1 to ensure proper initialization, check that all IDs are present and in order
              test1 = False
              testSum = ((numRobots - 1)*(numRobots))/2
              sum = 0
@@ -271,7 +276,7 @@ class Function():
 
              return test1
 
-        def test_2(self, idArray, numRobots):
+        def test_2(self, idArray, numRobots): # Test 2 to ensure proper initialization, check that all IDs are unique
              test2 = False
              testArray = []
              for i in range(0, numRobots):
@@ -282,7 +287,7 @@ class Function():
 
              return test2
 
-        def run_inference_for_single_image(self, image, graph, sess):
+        def run_inference_for_single_image(self, image, graph, sess): # Given an image, use TensorFlow to run object detection on the image to localize Alphabot2 robots
               # Get handles to input and output tensors
               ops = tf.compat.v1.get_default_graph().get_operations()
               all_tensor_names = {output.name for op in ops for output in op.outputs}
