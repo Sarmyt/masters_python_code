@@ -529,25 +529,25 @@ with detection_graph.as_default() as graph:
               #     isEdge[agent] = True
               #     timer[agent] = time.time() + 5
               #     edgeTimer[agent] = time.time()
-              #
+              # 
               #     currentPosition[agent] = agentPosition[agent]
               #     orientationDes[agent] = Lib.get_orientation(currentPosition[agent], desPosition[agent])
               #
               #     if (agentPosition[agent][0] <= frame.shape[1]*0.01) and not test:
               #         index = np.where(idOrder_array==agent)
-              #         device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,L," + str(orientationDes[agent]) + ">")
+              #         device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,L" + ">")
               #
               #     if (agentPosition[agent][0] >= frame.shape[1]*0.99) and not test:
               #         index = np.where(idOrder_array==agent)
-              #         device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,R," + str(orientationDes[agent]) + ">")
+              #         device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,R" + ">")
               #
               #     if (agentPosition[agent][1] <= frame.shape[0]*0.01) and not test and not (agentPosition[agent][0] <= frame.shape[1]*0.01 or agentPosition[agent][0] >= frame.shape[1]*0.99):
               #         index = np.where(idOrder_array==agent)
-              #         device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,U," + str(orientationDes[agent]) + ">")
+              #         device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,U" + ">")
               #
               #     if (agentPosition[agent][1] >= frame.shape[0]*0.99) and not test and not (agentPosition[agent][0] <= frame.shape[1]*0.01 or agentPosition[agent][0] >= frame.shape[1]*0.99):
               #         index = np.where(idOrder_array==agent)
-              #         device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,D," + str(orientationDes[agent]) + ">")
+              #         device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,D" + ">")
 
 # Check time conditions
 
