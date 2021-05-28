@@ -235,91 +235,93 @@ class Tracker():
 		# return the set of trackable objects
 		return self.objects
 
-def angle_to_message(angle):
-    message = str(angle)
-    return message
+class Function():
 
-def get_angle(angle1, angle2):
-    angle = angle2 - angle1
-    if angle > 360:
-        angle = angle - 360
-    if angle < 0:
-        angle = angle + 360
-    return angle
+        def angle_to_message(self, angle):
+            message = str(angle)
+            return message
 
-def get_distance(point1, point2):
-     distance = math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
-     return distance
+        def get_angle(self, angle1, angle2):
+            angle = angle2 - angle1
+            if angle > 360:
+                angle = angle - 360
+            if angle < 0:
+                angle = angle + 360
+            return angle
 
-def get_orientation(point1, point2):
-     orientation = math.degrees(math.atan2(point1[1] - point2[1], point2[0] - point1[0]))
-     if orientation < 0:
-         orientation = 360 + orientation
-     return orientation
+        def get_distance(self, point1, point2):
+             distance = math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
+             return distance
 
-def test_1(idArray, numRobots):
-     test1 = False
-     testSum = ((numRobots - 1)*(numRobots))/2
-     sum = 0
-     for i in range(0, numRobots):
-         sum += idArray[i]
+        def get_orientation(self, point1, point2):
+             orientation = math.degrees(math.atan2(point1[1] - point2[1], point2[0] - point1[0]))
+             if orientation < 0:
+                 orientation = 360 + orientation
+             return orientation
 
-     if (sum == testSum):
-         test1 = True
+        def test_1(self, idArray, numRobots):
+             test1 = False
+             testSum = ((numRobots - 1)*(numRobots))/2
+             sum = 0
+             for i in range(0, numRobots):
+                 sum += idArray[i]
 
-     return test1
+             if (sum == testSum):
+                 test1 = True
 
-def test_2(idArray, numRobots):
-     test2 = False
-     testArray = []
-     for i in range(0, numRobots):
-         testArray.append(idArray[i])
+             return test1
 
-     if (len(testArray) == len(set(testArray))):
-         test2 = True
+        def test_2(self, idArray, numRobots):
+             test2 = False
+             testArray = []
+             for i in range(0, numRobots):
+                 testArray.append(idArray[i])
 
-     return test2
+             if (len(testArray) == len(set(testArray))):
+                 test2 = True
 
-def run_inference_for_single_image(image, graph, sess):
-      # Get handles to input and output tensors
-      ops = tf.compat.v1.get_default_graph().get_operations()
-      all_tensor_names = {output.name for op in ops for output in op.outputs}
-      tensor_dict = {}
-      for key in [
-          'num_detections', 'detection_boxes', 'detection_scores',
-          'detection_classes', 'detection_masks'
-      ]:
-        tensor_name = key + ':0'
-        if tensor_name in all_tensor_names:
-          tensor_dict[key] = tf.compat.v1.get_default_graph().get_tensor_by_name(
-              tensor_name)
-      if 'detection_masks' in tensor_dict:
-        # The following processing is only for single image
-        detection_boxes = tf.squeeze(tensor_dict['detection_boxes'], [0])
-        detection_masks = tf.squeeze(tensor_dict['detection_masks'], [0])
-        # Reframe is required to translate mask from box coordinates to image coordinates and fit the image size.
-        real_num_detection = tf.cast(tensor_dict['num_detections'][0], tf.int32)
-        detection_boxes = tf.slice(detection_boxes, [0, 0], [real_num_detection, -1])
-        detection_masks = tf.slice(detection_masks, [0, 0, 0], [real_num_detection, -1, -1])
-        detection_masks_reframed = utils_ops.reframe_box_masks_to_image_masks(
-            detection_masks, detection_boxes, image.shape[1], image.shape[2])
-        detection_masks_reframed = tf.cast(
-            tf.greater(detection_masks_reframed, 0.5), tf.uint8)
-        # Follow the convention by adding back the batch dimension
-        tensor_dict['detection_masks'] = tf.expand_dims(
-            detection_masks_reframed, 0)
-      image_tensor = tf.compat.v1.get_default_graph().get_tensor_by_name('image_tensor:0')
+             return test2
 
-      # Run inference
-      output_dict = sess.run(tensor_dict,
-                             feed_dict={image_tensor: image})
+        def run_inference_for_single_image(self, image, graph, sess):
+              # Get handles to input and output tensors
+              ops = tf.compat.v1.get_default_graph().get_operations()
+              all_tensor_names = {output.name for op in ops for output in op.outputs}
+              tensor_dict = {}
+              for key in [
+                  'num_detections', 'detection_boxes', 'detection_scores',
+                  'detection_classes', 'detection_masks'
+              ]:
+                tensor_name = key + ':0'
+                if tensor_name in all_tensor_names:
+                  tensor_dict[key] = tf.compat.v1.get_default_graph().get_tensor_by_name(
+                      tensor_name)
+              if 'detection_masks' in tensor_dict:
+                # The following processing is only for single image
+                detection_boxes = tf.squeeze(tensor_dict['detection_boxes'], [0])
+                detection_masks = tf.squeeze(tensor_dict['detection_masks'], [0])
+                # Reframe is required to translate mask from box coordinates to image coordinates and fit the image size.
+                real_num_detection = tf.cast(tensor_dict['num_detections'][0], tf.int32)
+                detection_boxes = tf.slice(detection_boxes, [0, 0], [real_num_detection, -1])
+                detection_masks = tf.slice(detection_masks, [0, 0, 0], [real_num_detection, -1, -1])
+                detection_masks_reframed = utils_ops.reframe_box_masks_to_image_masks(
+                    detection_masks, detection_boxes, image.shape[1], image.shape[2])
+                detection_masks_reframed = tf.cast(
+                    tf.greater(detection_masks_reframed, 0.5), tf.uint8)
+                # Follow the convention by adding back the batch dimension
+                tensor_dict['detection_masks'] = tf.expand_dims(
+                    detection_masks_reframed, 0)
+              image_tensor = tf.compat.v1.get_default_graph().get_tensor_by_name('image_tensor:0')
 
-      # all outputs are float32 numpy arrays, so convert types as appropriate
-      output_dict['num_detections'] = int(output_dict['num_detections'][0])
-      output_dict['detection_classes'] = output_dict[
-          'detection_classes'][0].astype(np.int64)
-      output_dict['detection_boxes'] = output_dict['detection_boxes'][0]
-      output_dict['detection_scores'] = output_dict['detection_scores'][0]
-      if 'detection_masks' in output_dict:
-        output_dict['detection_masks'] = output_dict['detection_masks'][0]
-      return output_dict
+              # Run inference
+              output_dict = sess.run(tensor_dict,
+                                     feed_dict={image_tensor: image})
+
+              # all outputs are float32 numpy arrays, so convert types as appropriate
+              output_dict['num_detections'] = int(output_dict['num_detections'][0])
+              output_dict['detection_classes'] = output_dict[
+                  'detection_classes'][0].astype(np.int64)
+              output_dict['detection_boxes'] = output_dict['detection_boxes'][0]
+              output_dict['detection_scores'] = output_dict['detection_scores'][0]
+              if 'detection_masks' in output_dict:
+                output_dict['detection_masks'] = output_dict['detection_masks'][0]
+              return output_dict

@@ -153,6 +153,10 @@ tracker = Lib.Tracker()
 
 voronoi = Lib.Voronoi()
 
+# Define object for utility functions
+
+function = Lib.Function()
+
 # Define frozen inference graph from path
 
 detection_graph = tf.Graph()
@@ -268,7 +272,7 @@ with detection_graph.as_default() as graph:
 
                           frame_expanded = np.expand_dims(frame, axis=0)
 
-                          output_dict = Lib.run_inference_for_single_image(frame_expanded, graph, sess) # Detect Alphabot2 in the frame
+                          output_dict = function.run_inference_for_single_image(frame_expanded, graph, sess) # Detect Alphabot2 in the frame
 
                           rects = []
 
@@ -303,7 +307,7 @@ with detection_graph.as_default() as graph:
 
                               frame_expanded = np.expand_dims(frame, axis=0)
 
-                              output_dict = Lib.run_inference_for_single_image(frame_expanded, graph, sess)
+                              output_dict = function.run_inference_for_single_image(frame_expanded, graph, sess)
 
                               rects = []
 
@@ -325,7 +329,7 @@ with detection_graph.as_default() as graph:
                                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                                   cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
                                   changePosition[objectID] = centroid
-                                  distanceInit[objectID] = Lib.get_distance(point1=positionInit[objectID], point2=changePosition[objectID])
+                                  distanceInit[objectID] = function.get_distance(point1=positionInit[objectID], point2=changePosition[objectID])
 
                               cv2.imshow("Frame", frame)
                               cv2.waitKey(1)
@@ -339,7 +343,7 @@ with detection_graph.as_default() as graph:
 
                               frame_expanded = np.expand_dims(frame, axis=0)
 
-                              output_dict = Lib.run_inference_for_single_image(frame_expanded, graph, sess)
+                              output_dict = function.run_inference_for_single_image(frame_expanded, graph, sess)
 
                               rects = []
 
@@ -365,7 +369,7 @@ with detection_graph.as_default() as graph:
                               cv2.imshow("Frame", frame)
                               cv2.waitKey(1)
 
-                          orientationInit[idOrder[i]] = Lib.get_orientation(point1=positionInit[idOrder[i]], point2=changePosition[idOrder[i]]) # Record initial orientation of robot
+                          orientationInit[idOrder[i]] = function.get_orientation(point1=positionInit[idOrder[i]], point2=changePosition[idOrder[i]]) # Record initial orientation of robot
 
                           device.send_data_async(remote_devices[i], "I," + str(orientationInit[idOrder[i]]) + ">")
 
@@ -374,9 +378,9 @@ with detection_graph.as_default() as graph:
 
                     print(idOrder)
 
-                    test1 = Lib.test_1(idArray=idOrder, numRobots=len(remote_devices)) # Test 1 that all robots were detected and initialized correctly
+                    test1 = function.test_1(idArray=idOrder, numRobots=len(remote_devices)) # Test 1 that all robots were detected and initialized correctly
 
-                    test2 = Lib.test_2(idArray=idOrder, numRobots=len(remote_devices)) # Test 2 that all robots were detected and initialized correctly
+                    test2 = function.test_2(idArray=idOrder, numRobots=len(remote_devices)) # Test 2 that all robots were detected and initialized correctly
 
                     if test1:
                         print("Test 1 passed.")
@@ -394,7 +398,7 @@ with detection_graph.as_default() as graph:
 
                     frame_expanded = np.expand_dims(frame, axis=0)
 
-                    output_dict = Lib.run_inference_for_single_image(frame_expanded, graph, sess)
+                    output_dict = function.run_inference_for_single_image(frame_expanded, graph, sess)
 
                     rects = []
 
@@ -443,7 +447,7 @@ with detection_graph.as_default() as graph:
 
               frame_expanded = np.expand_dims(frame, axis=0)
 
-              output_dict = Lib.run_inference_for_single_image(frame_expanded, graph, sess)
+              output_dict = function.run_inference_for_single_image(frame_expanded, graph, sess)
 
               rects = []
 
@@ -502,7 +506,7 @@ with detection_graph.as_default() as graph:
 
 # Check distance from desired location
 
-              distanceDes[agent] = Lib.get_distance(point1=desPosition[agent], point2=agentPosition[agent]) # Check distance from an agent to its desired position
+              distanceDes[agent] = function.get_distance(point1=desPosition[agent], point2=agentPosition[agent]) # Check distance from an agent to its desired position
 
               if (distanceDes[agent] > 30.0): # If distance is more than 30 pixels, then the agent has not arrived
                         isSuccess[agent] = False
@@ -525,29 +529,29 @@ with detection_graph.as_default() as graph:
 
 # Check edge conditions, if robot is at the edge of the boundary then a control action is sent to make it turn around
 
-              # if (((time.time() - edgeTimer[agent]) >= 5) and ((agentPosition[agent][0] <= frame.shape[1]*0.01) or (agentPosition[agent][0] >= frame.shape[1]*0.99) or (agentPosition[agent][1] <= frame.shape[0]*0.01) or (agentPosition[agent][1] >= frame.shape[0]*0.99))):
-              #     isEdge[agent] = True
-              #     timer[agent] = time.time() + 5
-              #     edgeTimer[agent] = time.time()
-              # 
-              #     currentPosition[agent] = agentPosition[agent]
-              #     orientationDes[agent] = Lib.get_orientation(currentPosition[agent], desPosition[agent])
-              #
-              #     if (agentPosition[agent][0] <= frame.shape[1]*0.01) and not test:
-              #         index = np.where(idOrder_array==agent)
-              #         device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,L" + ">")
-              #
-              #     if (agentPosition[agent][0] >= frame.shape[1]*0.99) and not test:
-              #         index = np.where(idOrder_array==agent)
-              #         device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,R" + ">")
-              #
-              #     if (agentPosition[agent][1] <= frame.shape[0]*0.01) and not test and not (agentPosition[agent][0] <= frame.shape[1]*0.01 or agentPosition[agent][0] >= frame.shape[1]*0.99):
-              #         index = np.where(idOrder_array==agent)
-              #         device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,U" + ">")
-              #
-              #     if (agentPosition[agent][1] >= frame.shape[0]*0.99) and not test and not (agentPosition[agent][0] <= frame.shape[1]*0.01 or agentPosition[agent][0] >= frame.shape[1]*0.99):
-              #         index = np.where(idOrder_array==agent)
-              #         device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,D" + ">")
+              if (((time.time() - edgeTimer[agent]) >= 5) and ((agentPosition[agent][0] <= frame.shape[1]*0.01) or (agentPosition[agent][0] >= frame.shape[1]*0.99) or (agentPosition[agent][1] <= frame.shape[0]*0.01) or (agentPosition[agent][1] >= frame.shape[0]*0.99))):
+                  isEdge[agent] = True
+                  timer[agent] = time.time() + 5
+                  edgeTimer[agent] = time.time()
+
+                  currentPosition[agent] = agentPosition[agent]
+                  orientationDes[agent] = function.get_orientation(currentPosition[agent], desPosition[agent])
+
+                  if (agentPosition[agent][0] <= frame.shape[1]*0.01) and not test:
+                      index = np.where(idOrder_array==agent)
+                      device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,L," + str(orientationDes[agent]) + ">")
+
+                  if (agentPosition[agent][0] >= frame.shape[1]*0.99) and not test:
+                      index = np.where(idOrder_array==agent)
+                      device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,R," + str(orientationDes[agent]) + ">")
+
+                  if (agentPosition[agent][1] <= frame.shape[0]*0.01) and not test and not (agentPosition[agent][0] <= frame.shape[1]*0.01 or agentPosition[agent][0] >= frame.shape[1]*0.99):
+                      index = np.where(idOrder_array==agent)
+                      device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,U," + str(orientationDes[agent]) + ">")
+
+                  if (agentPosition[agent][1] >= frame.shape[0]*0.99) and not test and not (agentPosition[agent][0] <= frame.shape[1]*0.01 or agentPosition[agent][0] >= frame.shape[1]*0.99):
+                      index = np.where(idOrder_array==agent)
+                      device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,D," + str(orientationDes[agent]) + ">")
 
 # Check time conditions
 
@@ -561,14 +565,14 @@ with detection_graph.as_default() as graph:
 
                             messageArray[agent] = "F"
 
-                            timestepDistance[agent] = Lib.get_distance(currentPosition[agent], agentPosition[agent])
+                            timestepDistance[agent] = function.get_distance(currentPosition[agent], agentPosition[agent])
                             if (timestepDistance[agent] > 5):
                                 prevPosition[agent] = currentPosition[agent]
                                 currentPosition[agent] = agentPosition[agent]
-                                orientation[agent] = Lib.get_orientation(prevPosition[agent], currentPosition[agent])
-                                orientationDes[agent] = Lib.get_orientation(currentPosition[agent], desPosition[agent])
-                                angle[agent] = Lib.get_angle(orientation[agent], orientationDes[agent])
-                                messageArray[agent] = Lib.angle_to_message(angle[agent])
+                                orientation[agent] = function.get_orientation(prevPosition[agent], currentPosition[agent])
+                                orientationDes[agent] = function.get_orientation(currentPosition[agent], desPosition[agent])
+                                angle[agent] = function.get_angle(orientation[agent], orientationDes[agent])
+                                messageArray[agent] = function.angle_to_message(angle[agent])
 
                             if not test:
                                 index = np.where(idOrder_array==agent)
@@ -582,9 +586,9 @@ with detection_graph.as_default() as graph:
                             orientation[agent] = orientationInit[agent]
                         else:
                             orientation[agent] = 0
-                        orientationDes[agent] = Lib.get_orientation(currentPosition[agent], desPosition[agent])
-                        angle[agent] = Lib.get_angle(orientation[agent], orientationDes[agent])
-                        messageArray[agent] = Lib.angle_to_message(angle[agent])
+                        orientationDes[agent] = function.get_orientation(currentPosition[agent], desPosition[agent])
+                        angle[agent] = function.get_angle(orientation[agent], orientationDes[agent])
+                        messageArray[agent] = function.angle_to_message(angle[agent])
                         if not test:
                             index = np.where(idOrder_array==agent)
                             device.send_data_async(remote_devices[index[0][0]], "R," + messageArray[agent] + ">")
