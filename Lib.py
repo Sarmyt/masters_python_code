@@ -78,7 +78,7 @@ class Voronoi:
         return [C_x, C_y]
 
     def sensing(self, dis): # Sensing capabilities of an agent with respect to calculation of the coverage metric
-        sense = np.exp(-(dis**2)/(30**2))
+        sense = np.exp(-(dis**2)/(150**2))
         return sense
 
     def coverage_metric(self, agent_pos, vor, index, risk_den): # Calculating the coverage metric over a single Voronoi cell
