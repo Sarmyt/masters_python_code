@@ -86,7 +86,7 @@ class Voronoi:
 
         for i in range(len(vor)):
             dis = self.get_distance(agent_pos, vor[i])
-            coverage += risk_den[index[i][1]][index[i][0]]*self.sensing(dis)
+            coverage += risk_den[index[i][1]][index[i][0]]*self.sensing(dis)*100.0
 
         return coverage
 
