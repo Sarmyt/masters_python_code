@@ -68,9 +68,9 @@ class Voronoi:
         risk_y = 0
 
         for i in range(len(vor)):
-            risk += risk_den[index[i][1]][index[i][0]]
-            risk_x += vor[i][0]*risk_den[index[i][1]][index[i][0]]
-            risk_y += vor[i][1]*risk_den[index[i][1]][index[i][0]]
+            risk += risk_den[index[i][1]][index[i][0]]*100
+            risk_x += vor[i][0]*risk_den[index[i][1]][index[i][0]]*100
+            risk_y += vor[i][1]*risk_den[index[i][1]][index[i][0]]*100
 
         C_x = (risk_x/risk)
         C_y = (risk_y/risk)

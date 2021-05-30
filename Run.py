@@ -185,8 +185,8 @@ success, frame = vidcap.read()
 width_sections = 64
 height_sections = 48
 
-xdim = np.linspace(0, frame.shape[1], width_sections)
-ydim = np.linspace(0, frame.shape[0], height_sections)
+xdim = np.linspace(5, frame.shape[1] - 5, width_sections)
+ydim = np.linspace(5, frame.shape[0] - 5, height_sections)
 X, Y = np.meshgrid(xdim,ydim)
 
 # Define map of risk density based on selected option
