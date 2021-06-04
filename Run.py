@@ -25,7 +25,7 @@ from digi.xbee.devices import XBee64BitAddress
 
 # Defining test configuration, if true then code is run on sample video for testing purposes
 
-test = True
+test = False
 
 # Defining risk density option and parameters
 
@@ -65,7 +65,7 @@ if not test:
 
     # Define Controller Device
 
-    device = XBeeDevice("COM4", 9600)
+    device = XBeeDevice("COM4", 9600) # Pick your specific port
 
     # Open Controller Device
 
@@ -94,14 +94,13 @@ orientationInit = [] # Initialization orientation variable
 
 # Variable assignment for main run loop phase
 
-pass_var = False
-agent = 0
 iterations = 0
 frame_count = 0
 
 edgeTimer = []
 timer = []
 
+pass_var = [] # Indicates if this agent should be passed this iteration
 isSuccess = [] # Indicates if desired position has been achieved
 isEdge = [] # Indicates if agent is near an edge
 reset = []
@@ -131,6 +130,7 @@ for i in range(len(remote_devices)):
     edgeTimer.append(time.time())
     timer.append(time.time())
 
+    pass_var.append(False) # Indicates if this agent should be passed this iteration
     isSuccess.append(False) # Indicates if desired position has been achieved
     isEdge.append(False) # Indicates if agent is near an edge
     reset.append(True)
@@ -176,7 +176,7 @@ category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABE
 if test:
     vidcap = cv2.VideoCapture("Test.mp4")
 else:
-    vidcap = cv2.VideoCapture(1)
+    vidcap = cv2.VideoCapture(0)
 
 success, frame = vidcap.read()
 
@@ -483,10 +483,8 @@ with detection_graph.as_default() as graph:
                   desPosition = []
 
                   for n in range(len(remote_devices)):
-                      desPosition.append(voronoi.centroid(voronoi_update[n], index_update[n], risk)) # Find centroid of each Voronoi partition
+                      desPosition.append(voronoi.centroid(voronoi_update[n], index_update[n], risk, agentPosition[n])) # Find centroid of each Voronoi partition
                       isSuccess[n] = False
-
-                  agent = 0
 
               coverage = 0
 
@@ -504,98 +502,97 @@ with detection_graph.as_default() as graph:
                   data_txt.write("Time: {}, Coverage Metric: {}, Iteration: {}, Agent Positions: {}, Desired Positions: {}".format(time.time() - start_time, coverage, iterations, agentPosition, desPosition))
               data_txt.write("\n")
 
-# Check distance from desired location
+              for agent in range(len(remote_devices)):
 
-              distanceDes[agent] = function.get_distance(point1=desPosition[agent], point2=agentPosition[agent]) # Check distance from an agent to its desired position
+    # Check distance from desired location
 
-              if (distanceDes[agent] > 30.0): # If distance is more than 30 pixels, then the agent has not arrived
-                        isSuccess[agent] = False
+                  distanceDes[agent] = function.get_distance(point1=desPosition[agent], point2=agentPosition[agent]) # Check distance from an agent to its desired position
 
-              if (distanceDes[agent] <= 30.0 and isSuccess[agent] == False): # If distance is less than 30 pixels, then the agent has arrived
-                        if (reset[agent] == True) and not test:
-                            index = np.where(idOrder_array==agent)
-                            device.send_data_async(remote_devices[index[0][0]], "A," + str(orientationInit[agent]) + ">")
-                        if (reset[agent] == False) and not test:
-                            index = np.where(idOrder_array==agent)
-                            device.send_data_async(remote_devices[index[0][0]], "A," + str(orientation[agent]) + ">")
+                  if (distanceDes[agent] > 30.0): # If distance is more than 30 pixels, then the agent has not arrived
+                            isSuccess[agent] = False
 
-                        isSuccess[agent] = True
-                        agent = agent + 1
-                        if agent > (len(remote_devices) - 1):
-                            agent = len(remote_devices) - 1
+                  if (distanceDes[agent] <= 30.0 and isSuccess[agent] == False): # If distance is less than 30 pixels, then the agent has arrived
+                            if (reset[agent] == True) and not test:
+                                index = np.where(idOrder_array==agent)
+                                device.send_data_async(remote_devices[index[0][0]], "A," + str(orientationInit[agent]) + ">")
+                            if (reset[agent] == False) and not test:
+                                index = np.where(idOrder_array==agent)
+                                device.send_data_async(remote_devices[index[0][0]], "A," + str(orientation[agent]) + ">")
 
-                        pass_var = True
+                            isSuccess[agent] = True
+
+                            pass_var[agent] = True
 
 
-# Check edge conditions, if robot is at the edge of the boundary then a control action is sent to make it turn around
+    # Check edge conditions, if robot is at the edge of the boundary then a control action is sent to make it turn around
 
-              if (((time.time() - edgeTimer[agent]) >= 5) and ((agentPosition[agent][0] <= frame.shape[1]*0.01) or (agentPosition[agent][0] >= frame.shape[1]*0.99) or (agentPosition[agent][1] <= frame.shape[0]*0.01) or (agentPosition[agent][1] >= frame.shape[0]*0.99))):
-                  isEdge[agent] = True
-                  timer[agent] = time.time() + 5
-                  edgeTimer[agent] = time.time()
+                  if (((time.time() - edgeTimer[agent]) >= 5) and ((agentPosition[agent][0] <= frame.shape[1]*0.01) or (agentPosition[agent][0] >= frame.shape[1]*0.99) or (agentPosition[agent][1] <= frame.shape[0]*0.01) or (agentPosition[agent][1] >= frame.shape[0]*0.99))):
+                      isEdge[agent] = True
+                      timer[agent] = time.time() + 5
+                      edgeTimer[agent] = time.time()
 
-                  currentPosition[agent] = agentPosition[agent]
-                  orientationDes[agent] = function.get_orientation(currentPosition[agent], desPosition[agent])
+                      currentPosition[agent] = agentPosition[agent]
+                      orientationDes[agent] = function.get_orientation(currentPosition[agent], desPosition[agent])
 
-                  if (agentPosition[agent][0] <= frame.shape[1]*0.01) and not test:
-                      index = np.where(idOrder_array==agent)
-                      device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,L," + str(orientationDes[agent]) + ">")
+                      if (agentPosition[agent][0] <= frame.shape[1]*0.01) and not test:
+                          index = np.where(idOrder_array==agent)
+                          device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,L," + str(orientationDes[agent]) + ">")
 
-                  if (agentPosition[agent][0] >= frame.shape[1]*0.99) and not test:
-                      index = np.where(idOrder_array==agent)
-                      device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,R," + str(orientationDes[agent]) + ">")
+                      if (agentPosition[agent][0] >= frame.shape[1]*0.99) and not test:
+                          index = np.where(idOrder_array==agent)
+                          device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,R," + str(orientationDes[agent]) + ">")
 
-                  if (agentPosition[agent][1] <= frame.shape[0]*0.01) and not test and not (agentPosition[agent][0] <= frame.shape[1]*0.01 or agentPosition[agent][0] >= frame.shape[1]*0.99):
-                      index = np.where(idOrder_array==agent)
-                      device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,U," + str(orientationDes[agent]) + ">")
+                      if (agentPosition[agent][1] <= frame.shape[0]*0.01) and not test and not (agentPosition[agent][0] <= frame.shape[1]*0.01 or agentPosition[agent][0] >= frame.shape[1]*0.99):
+                          index = np.where(idOrder_array==agent)
+                          device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,U," + str(orientationDes[agent]) + ">")
 
-                  if (agentPosition[agent][1] >= frame.shape[0]*0.99) and not test and not (agentPosition[agent][0] <= frame.shape[1]*0.01 or agentPosition[agent][0] >= frame.shape[1]*0.99):
-                      index = np.where(idOrder_array==agent)
-                      device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,D," + str(orientationDes[agent]) + ">")
+                      if (agentPosition[agent][1] >= frame.shape[0]*0.99) and not test and not (agentPosition[agent][0] <= frame.shape[1]*0.01 or agentPosition[agent][0] >= frame.shape[1]*0.99):
+                          index = np.where(idOrder_array==agent)
+                          device.send_data_async(remote_devices[remote_devices[index[0][0]]], "E,D," + str(orientationDes[agent]) + ">")
 
-# Check time conditions
+    # Check time conditions
 
-              if ((((time.time() - timer[agent]) >= 5) or (reset[agent])) and not isSuccess[agent] and not isEdge[agent] and not pass_var):
+                  if ((((time.time() - timer[agent]) >= 5) or (reset[agent])) and not isSuccess[agent] and not isEdge[agent] and not pass_var[agent]):
 
-# Determine orientation and position of each robot
+    # Determine orientation and position of each robot
 
-                    timer[agent] = time.time()
+                        timer[agent] = time.time()
 
-                    if (reset[agent] == False): # If not first run through of loop for this agent
+                        if (reset[agent] == False): # If not first run through of loop for this agent
 
-                            messageArray[agent] = "F"
+                                messageArray[agent] = "F"
 
-                            timestepDistance[agent] = function.get_distance(currentPosition[agent], agentPosition[agent])
-                            if (timestepDistance[agent] > 5):
-                                prevPosition[agent] = currentPosition[agent]
-                                currentPosition[agent] = agentPosition[agent]
-                                orientation[agent] = function.get_orientation(prevPosition[agent], currentPosition[agent])
-                                orientationDes[agent] = function.get_orientation(currentPosition[agent], desPosition[agent])
-                                angle[agent] = function.get_angle(orientation[agent], orientationDes[agent])
-                                messageArray[agent] = function.angle_to_message(angle[agent])
+                                timestepDistance[agent] = function.get_distance(currentPosition[agent], agentPosition[agent])
+                                if (timestepDistance[agent] > 5):
+                                    prevPosition[agent] = currentPosition[agent]
+                                    currentPosition[agent] = agentPosition[agent]
+                                    orientation[agent] = function.get_orientation(prevPosition[agent], currentPosition[agent])
+                                    orientationDes[agent] = function.get_orientation(currentPosition[agent], desPosition[agent])
+                                    angle[agent] = function.get_angle(orientation[agent], orientationDes[agent])
+                                    messageArray[agent] = function.angle_to_message(angle[agent])
 
+                                if not test:
+                                    index = np.where(idOrder_array==agent)
+                                    device.send_data_async(remote_devices[index[0][0]], "R," + messageArray[agent] + ">")
+                                print("Object ID: " + str(agent) + " Orientation: " + str(orientation[agent])[:4] + " Desired Orientation: " + str(orientationDes[agent])[:4] + " Message Sent: "+ messageArray[agent][:4])
+
+                        if (reset[agent] == True): # If first run through of loop for this agent
+                            reset[agent] = False
+                            currentPosition[agent] = agentPosition[agent]
+                            if not test:
+                                orientation[agent] = orientationInit[agent]
+                            else:
+                                orientation[agent] = 0
+                            orientationDes[agent] = function.get_orientation(currentPosition[agent], desPosition[agent])
+                            angle[agent] = function.get_angle(orientation[agent], orientationDes[agent])
+                            messageArray[agent] = function.angle_to_message(angle[agent])
                             if not test:
                                 index = np.where(idOrder_array==agent)
                                 device.send_data_async(remote_devices[index[0][0]], "R," + messageArray[agent] + ">")
                             print("Object ID: " + str(agent) + " Orientation: " + str(orientation[agent])[:4] + " Desired Orientation: " + str(orientationDes[agent])[:4] + " Message Sent: "+ messageArray[agent][:4])
 
-                    if (reset[agent] == True): # If first run through of loop for this agent
-                        reset[agent] = False
-                        currentPosition[agent] = agentPosition[agent]
-                        if not test:
-                            orientation[agent] = orientationInit[agent]
-                        else:
-                            orientation[agent] = 0
-                        orientationDes[agent] = function.get_orientation(currentPosition[agent], desPosition[agent])
-                        angle[agent] = function.get_angle(orientation[agent], orientationDes[agent])
-                        messageArray[agent] = function.angle_to_message(angle[agent])
-                        if not test:
-                            index = np.where(idOrder_array==agent)
-                            device.send_data_async(remote_devices[index[0][0]], "R," + messageArray[agent] + ">")
-                        print("Object ID: " + str(agent) + " Orientation: " + str(orientation[agent])[:4] + " Desired Orientation: " + str(orientationDes[agent])[:4] + " Message Sent: "+ messageArray[agent][:4])
-
-              isEdge[agent] = False
-              pass_var = False
+                  isEdge[agent] = False
+                  pass_var[agent] = False
 
 # Annotate image
 

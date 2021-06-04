@@ -62,15 +62,17 @@ class Voronoi:
 
       return phi
 
-    def centroid(self, vor, index, risk_den): # Function for finding the centroid of a Voronoi cell given the risk distribution in that cell
+    def centroid(self, vor, index, risk_den, agent_pos): # Function for finding the centroid of a Voronoi cell given the risk distribution in that cell
         risk = 0
         risk_x = 0
         risk_y = 0
 
         for i in range(len(vor)):
-            risk += risk_den[index[i][1]][index[i][0]]*100
-            risk_x += vor[i][0]*risk_den[index[i][1]][index[i][0]]*100
-            risk_y += vor[i][1]*risk_den[index[i][1]][index[i][0]]*100
+            dis = self.get_distance(agent_pos, vor[i])
+
+            risk += risk_den[index[i][1]][index[i][0]]*100.0*self.sensing(dis)
+            risk_x += vor[i][0]*risk_den[index[i][1]][index[i][0]]*100.0*self.sensing(dis)
+            risk_y += vor[i][1]*risk_den[index[i][1]][index[i][0]]*100.0*self.sensing(dis)
 
         C_x = (risk_x/risk)
         C_y = (risk_y/risk)
